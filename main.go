@@ -1,10 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"io"
-	"os"
-
 	"github.com/meilisearch/meilisearch-go"
 )
 
@@ -13,15 +9,22 @@ func main() {
 		Host: "http://localhost:7700",
 	})
 
-	jsonFile, _ := os.Open("movies.json")
-	defer jsonFile.Close()
+	// https://docs.meilisearch.com/learn/core_concepts/primary_key.html#primary-field
+	// md5("C=%s," +"G=%s,K=%s,NS=%s,N=%s")
 
-	byteValue, _ := io.ReadAll(jsonFile)
-	var movies []map[string]interface{}
-	json.Unmarshal(byteValue, &movies)
+	client.CreateIndex(&meilisearch.IndexConfig{
+		Uid:        "k8s",
+		PrimaryKey: "reference_number",
+	})
 
-	_, err := client.Index("movies").AddDocuments(movies)
-	if err != nil {
-		panic(err)
+	documents := []map[string]interface{}{
+		{
+			"reference_number": 287947,
+			"title":            "Diary of a Wimpy Kid",
+			"author":           "Jeff Kinney",
+			"genres":           []string{"comedy", "humor"},
+			"price":            5.00,
+		},
 	}
+	client.Index("k8s").AddDocuments(documents, "reference_number")
 }
